@@ -4,7 +4,7 @@
     <title>BUA 345 - Lecture 14</title>
     <meta charset="utf-8" />
     <meta name="author" content="Penelope Pooler Eisenbies" />
-    <meta name="date" content="2023-03-06" />
+    <meta name="date" content="2023-03-07" />
     <script src="docs_files/header-attrs/header-attrs.js"></script>
     <link href="docs_files/panelset/panelset.css" rel="stylesheet" />
     <script src="docs_files/panelset/panelset.js"></script>
@@ -49,7 +49,7 @@ class: bottom, right
 
 #### Penelope Pooler Eisenbies
 
-#### 2023-03-06
+#### 2023-03-07
 
 [Wikipedia Sloth Page](https://en.wikipedia.org/wiki/Sloth)
 
@@ -210,7 +210,7 @@ Hint: To answer this question, you combine two terms:
 
 
 ```r
-insure &lt;- read_csv("insure_L15.csv", show_col_types=F) # import
+insure &lt;- read_csv("insure_L14.csv", show_col_types=F) # import
 insure &lt;- insure |&gt; # create log transformed variable
   mutate(ln_charges = log(Charges)) |&gt; glimpse(width=75)
 ```

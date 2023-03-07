@@ -315,9 +315,9 @@ Hint: To answer this question, you combine two terms:
 
 #### Import and Examine Insurance Data
 
-```{r import and examine insure_L15 data}
+```{r import and examine insure_L14 data}
 
-insure <- read_csv("insure_L15.csv", show_col_types=F) # import
+insure <- read_csv("insure_L14.csv", show_col_types=F) # import
 insure <- insure |> # create log transformed variable
   mutate(ln_charges = log(Charges)) |> glimpse(width=75)
 

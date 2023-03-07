@@ -1726,7 +1726,7 @@ difference = <code>____</code></p>
 </div>
 <div id="import-and-examine-insurance-data" class="section level4">
 <h4>Import and Examine Insurance Data</h4>
-<pre class="r"><code>insure &lt;- read_csv(&quot;insure_L15.csv&quot;, show_col_types=F) # import
+<pre class="r"><code>insure &lt;- read_csv(&quot;insure_L14.csv&quot;, show_col_types=F) # import
 insure &lt;- insure |&gt; # create log transformed variable
   mutate(ln_charges = log(Charges)) |&gt; glimpse(width=75)</code></pre>
 <pre><code>## Rows: 1,338
