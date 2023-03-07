@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>BUA 345 - Lecture 14</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Penelope Pooler Eisenbies" />
+    <meta name="date" content="2023-03-06" />
+    <script src="docs_files/header-attrs/header-attrs.js"></script>
+    <link href="docs_files/panelset/panelset.css" rel="stylesheet" />
+    <script src="docs_files/panelset/panelset.js"></script>
+    <link href="docs_files/tile-view/tile-view.css" rel="stylesheet" />
+    <script src="docs_files/tile-view/tile-view.js"></script>
+    <script src="docs_files/xaringanExtra_fit-screen/fit-screen.js"></script>
+    <link href="docs_files/tachyons/tachyons.min.css" rel="stylesheet" />
+    <link href="docs_files/animate.css/animate.xaringan.css" rel="stylesheet" />
+    <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+background-image: url("docs_files/images/sloth_faded.png")
+background-size: cover
+
+class: bottom, right
+
+## BUA 345 - Lecture 14
+
+### Introduction to Model Selection
+
+&lt;br&gt;
+
+
+#### Penelope Pooler Eisenbies
+
+#### 2023-03-06
+
+[Wikipedia Sloth Page](https://en.wikipedia.org/wiki/Sloth)
+
+---
+
+### Upcoming Dates
+
+.pull-left[
+
+- **HW 6 was due yesterday (3/6)** but grace period is extended until tonight at midnight.
+
+- **HW 7 is due on Monday, 3/20**. 
+
+   - Grace Period is extended until Wednesday 3/22 at midnight, because of Spring Break.
+  
+- **Quiz 2 is Thursday, March 30th**
+
+- Thursday's Lecture (3/9) will include In-class Exercises using the Animals Data and your HW 7 data to help you make progress.
+
+]
+
+.pull-right[
+
+&lt;img src="docs_files/images/owl.png" width="304" /&gt;
+
+]
+
+---
+
+### Getting Started with Markdown
+
+- Download Zipped R project 
+
+- Open Zipped folder and copy internal folder (R Project) to a BUA 345 folder on your computer NOT IN DOWLOADS
+
+- Click on .Rproj file to open project
+
+- Click on `code_data_output` file to open it.
+
+- Click on `BUA_345_Lecture_14.Rmd` to open it.
+
+- Run Setup Chunk
+
+---
+
+### Setup
+
+* The setup chunk shows the packages needed for this demo.   
+
+* R will install specified packages if needed (only required once after R is installed)  
+
+* R will load specified packaged (required every time you start a new R session)  
+
+* The first time you run this code, R will install these packages which will be slow.  
+
+* **If you get warnings, that's okay.**  
+
+* If you get **error messages**, I (or TA), can help you.
+
+---
+
+### Setup Chunk for Lecture 14
+
+
+```r
+# this line specifies options for default options for all R Chunks
+knitr::opts_chunk$set(echo=T, highlight=T)
+# suppress scientific notation
+options(scipen=100)
+
+# install helper package that loads and installs other packages, if needed
+if (!require("pacman")) install.packages("pacman", repos = "http://lib.stat.cmu.edu/R/CRAN/")
+
+# install and load required packages
+pacman::p_load(pacman,tidyverse, magrittr, olsrr, gridExtra, ggiraphExtra, knitr)
+
+# verify packages
+p_loaded()
+```
+
+```
+##  [1] "knitr"          "ggiraphExtra"   "olsrr"          "xaringanthemer"
+##  [5] "magrittr"       "gridExtra"      "forcats"        "stringr"       
+##  [9] "dplyr"          "purrr"          "readr"          "tidyr"         
+## [13] "tibble"         "ggplot2"        "tidyverse"      "pacman"
+```
+
+**NOTES:
+
+- ** Don't worry about `xaringanthemer` package (required for my slides but not for your code).
+
+- If you are having trouble installing/loading any packages, please come to office hour or make an appointment with me or course TA.
+
+---
+
+### Lecture 14 In-class Exercises - Review Question
+
+#### **Question 1 (L14) - Session ID: bua345s23**
+
+- Recall the Actors and Athletes data that we examined in Lecture 14.
+
+
+```r
+# import and examine celeb profession dataset
+celeb_prof &lt;- read_csv("celeb_prof.csv", show_col_types=F) 
+
+# formatted regression output - saved and printed to screen
+(celeb_interaction_ols&lt;- ols_regress(Earnings ~ Age + Profession + Age*Profession,
+                                     data=celeb_prof, iterm = T))
+```
+
+#### Abridged Output
+
+&lt;img src="docs_files/images/clb_prof_int_mlr.jpg" width="749" /&gt;
+
+---
+
+### Lecture 14 In-class Exercises - Review Question
+
+#### **Question 1 (L14) - Session ID: bua345s23**
+
+#### Abridged Output
+
+&lt;img src="docs_files/images/clb_prof_int_mlr.jpg" width="749" /&gt;
+
+Review Question: Based on the regression output for the Actors and Athletes data, **what is the slope for the linear model for Athletes**?
+
+Round answer to two decimal places.
+
+Hint: To answer this question, you combine two terms:
+-   the baseline slope term for `Age`: 1.824
+-   the difference in slope `Athlete`: -5.063
+-   Slope for Athletes = baseline + difference = `____`
+
+---
+
+### Review of Regression Terms
+
+#### R&lt;sup&gt;2&lt;/sup&gt; and Adjusted R&lt;sup&gt;2&lt;/sup&gt;:
+
+- **R** is the correlation coefficient, R&lt;sub&gt;XY&lt;/sub&gt;
+
+- **R&lt;sup&gt;2&lt;/sup&gt;** is (R&lt;sub&gt;XY&lt;/sub&gt;)&lt;sup&gt;2&lt;/sup&gt;
+
+- **R&lt;sup&gt;2&lt;/sup&gt;** is also called coefficient of determination
+
+- **Meaning of R&lt;sup&gt;2&lt;/sup&gt; in SLR:** Proportion of variability in y explained by X
+
+- **Adjusted R&lt;sup&gt;2&lt;/sup&gt;** adjusts **R&lt;sup&gt;2&lt;/sup&gt;** for number of explanatory (X) variables in model.
+
+  -   Meaning of **Adjusted R&lt;sup&gt;2&lt;/sup&gt;** in MLR is a little less specific but similar to **R&lt;sup&gt;2&lt;/sup&gt;**
+  
+---
+
+#### Example of R&lt;sup&gt;2&lt;/sup&gt; Interpretation
+
+#### Import and Examine Insurance Data
+
+
+```r
+insure &lt;- read_csv("insure_L15.csv", show_col_types=F) # import
+insure &lt;- insure |&gt; # create log transformed variable
+  mutate(ln_charges = log(Charges)) |&gt; glimpse(width=75)
+```
+
+```
+## Rows: 1,338
+## Columns: 5
+## $ Charges    &lt;dbl&gt; 16884.924, 1725.552, 4449.462, 21984.471, 3866.855, 37…
+## $ Age        &lt;dbl&gt; 19, 18, 28, 33, 32, 31, 46, 37, 37, 60, 25, 62, 23, 56…
+## $ BMI        &lt;dbl&gt; 27.900, 33.770, 33.000, 22.705, 28.880, 25.740, 33.440…
+## $ Children   &lt;dbl&gt; 0, 1, 3, 0, 0, 0, 1, 3, 2, 0, 0, 0, 0, 0, 0, 1, 1, 0, …
+## $ ln_charges &lt;dbl&gt; 9.734176, 7.453302, 8.400538, 9.998092, 8.260197, 8.23…
+```
+
+---
+
+#### Examine Histograms of Charges and ln_charges
+
+&lt;img src="docs_files/figure-html/creatingand formatting histograms of Charges and ln_charges-1.png" width="1080" style="display: block; margin: auto;" /&gt;
+
+---
+
+### SLR model - Predictor (X) Variable: Age
+
+
+```r
+# save and print slr model
+(insure_slr &lt;- ols_regress(ln_charges ~ Age, data=insure))
+```
+
+#### Abridged Output
+
+&lt;img src="docs_files/images/insure_slr1.jpg" width="499" /&gt;&lt;img src="docs_files/images/insure_slr2.jpg" width="700" /&gt;
+
+---
+
+### More about R&lt;sup&gt;2&lt;/sup&gt; and How It's Calculated
+
+&lt;img src="docs_files/images/insure_slr_anova.jpg" width="578" /&gt;
+
+
+- R = 0.528 which indicates a moderate correlation between `Age` and `ln_charges` (Natural Log of Insurance Charges)
+
+- R&lt;sup&gt;2&lt;/sup&gt; = 0.279 which means that approximately 28% of the variability in `ln_charges` (Natural Log of Insurance Charges) is explained by `Age`.
+
+- R&lt;sup&gt;2&lt;/sup&gt; can also be calculated from the Sum of Squares output:
+
+   - **SS&lt;sub&gt;TOT&lt;/sub&gt;** (Total. Sum of Squares): **1130.474 (Total variability in Y)**
+  
+   - **SS&lt;sub&gt;REG&lt;/sub&gt;** (Regression. Sum of Squares): **314.960 (Variability in Y explained by model)**
+   
+   - **SS&lt;sub&gt;RES&lt;/sub&gt;** (Residual Sum of Squares): **815.514 (Variability in Y NOT explained by model)**
+
+   - **R&lt;sup&gt;2&lt;/sup&gt; = SS&lt;sub&gt;REG&lt;/sub&gt; / SS&lt;sub&gt;TOT&lt;/sub&gt; = 314.96/1130.474 = 0.279**
+   
+---
+
+### MLR with Quantitative Interaction Term
+
+- In Lecture 14, categorical terms and interactions had a simple interpretation:
+
+  - Each category has a unique SLR model:
+
+     - The intercepts for different categories may or may not be different from baseline category(check P-values)
+
+     - The slopes for different categories may or may not be different from baseline category (check P-values)
+     
+&lt;br&gt;
+
+- There are, however, other kinds of interaction terms.
+
+- The first one we will discuss is an interaction between two QUANTITATIVE variables.
+
+---
+
+### Example MLR Model with Quantitative Interaction Term
+
+-   One POSSIBLE model for these data (there are many):
+
+
+```r
+# save and print mlr model output
+(insure_mlr_quant1 &lt;- ols_regress(ln_charges ~ Age + BMI + Children + Age*Children, data=insure))
+insure_model1 &lt;- insure_mlr_quant1$model # save model parameters to use in calculations
+```
+
+### Abridged Output
+
+&lt;img src="docs_files/images/insure_mlr_quant_int2.jpg" width="723" /&gt;
+
+---
+
+### Interpreting and Evaluating Quantitative Interactions
+
+
+- Two CORRECT Interpretation(s) of this interaction:
+
+  1. The effect of age on insurance charges differs depending on how many children you have.
+
+  2. The effect of number of children on insurance charges differs depending your age.
+  
+- Which interpretation the analyst emphasizes depends on the question being addressed.
+
+&lt;br&gt;
+
+- Two Questions about Evaluating Interaction Terms:
+
+  - How do we decide if ANY interaction term should stay in the model?
+
+  - How do we attain estimates from a model with a qunatitative interaction?
+    
+     Example: If a person is 48, has a BMI of 28 and has 3 children, what is the estimate of their insurance changes in dollars (NOT the LN of their charges)?
+     
+---
+
+### Lecture 14 In-class Exercises - Quantitative Interactions
+
+### Abridged Output
+
+&lt;img src="docs_files/images/insure_mlr_quant_int2.jpg" width="723" /&gt;
+
+#### **Question 2 (L14) - Session ID: bua345s23**
+
+- Based on the R MLR output shown, is the interaction between Age and Number of Children useful in explaining differences in Insurance Charges?
+
+---
+
+### Lecture 14 In-class Exercises - Quantitative Interactions
+
+#### **Question 3 (L14) - Session ID: bua345s23**
+
+- Using this model, what is estimated insurance charge for 45 year old with a BMI of 26 and 2 children? Round to closest whole dollar. 
+
+   - Calculation can be done in R or Excel. Here are values for Excel calculation:
+   
+      - `Age = 45`
+      - `BMI = 26`
+      - `Children = 2`
+      - `Age*Children = 45*2 = 90`
+   
+---
+
+#### **Question 3 (L14) - Session ID: bua345s23**
+
+- Using this model, what is estimated insurance charge for 45 year old with a BMI of 26 and 2 children? Round to closest whole dollar. 
+
+#### Using a Saved Model in R to find an Estimate
+
+First specify values using **EXACT** variables names in model.
+`new_obs` is a one row data set (tibble) with these values.
+
+
+```r
+Age &lt;- 45      # specify values using variable names in model
+BMI &lt;- 26
+Children &lt;- 2
+new_obs &lt;- tibble(Age, BMI, Children) # new_obs is 1 row dataset
+new_obs |&gt; kable()
+```
+
+
+
+| Age| BMI| Children|
+|---:|---:|--------:|
+|  45|  26|        2|
+
+---
+
+#### **Question 3 (L14) - Session ID: bua345s23**
+
+- Using this model, what is estimated insurance charge for 45 year old with a BMI of 26 and 2 children? Round to closest whole dollar. 
+
+#### Using a Saved Model in R to find an Estimate
+
+Next, use `mutate` to create a new column in `new_obs`.  
+  - `est_ln_charges` is the estimate created using the `lm` (linear model) command with the saved model `insure_model1` and the `predict` command
+
+
+```r
+new_obs &lt;- new_obs |&gt;                  # create estimate_ln_charges
+  mutate(est_ln_charges = lm(insure_model1) |&gt; predict(new_obs))
+new_obs |&gt; kable()
+```
+
+
+
+| Age| BMI| Children| est_ln_charges|
+|---:|---:|--------:|--------------:|
+|  45|  26|        2|       9.311303|
+
+
+The last step is to back-transform the `est_ln_charges` value to create `est_charges`, the estimate of charges in dollars for this individual.
+
+
+```r
+# new_obs &lt;- new_obs |&gt; mutate(est_charges = ____(_____))
+# new_obs |&gt; kable()
+```
+
+---
+
+### Lecture 14 In-class Exercises - Quantitative Interactions
+
+#### **Question 4 (L14) - Session ID: bua345s23**
+
+In the above model, all included terms appear to be useful to the model. Is the interaction between Age and BMI also useful in explaining the variability in insurance charges?
+
+Examine the model output to answer this question.
+
+
+```r
+# save and print mlr model output
+(insure_mlr_quant2 &lt;- ols_regress(ln_charges ~ Age + BMI + Children + 
+                                    Age*Children + Age*BMI, data=insure))
+```
+
+#### Abridged output
+
+&lt;img src="docs_files/images/insure_mlr_quant_2int2.jpg" width="722" /&gt;
+
+---
+
+### Goodness of Fit - Adjusted R&lt;sup&gt;2&lt;/sup&gt;
+
+- Previous slides show two possible models for these data. ***There are 63 possible models*** with these X variables and all two way interactions.
+
+- Today we will discuss **Adjusted R&lt;sup&gt;2&lt;/sup&gt;** as one option to compare different models (We will cover other model comparison measures soon).
+  
+  - **Adjusted R&lt;sup&gt;2&lt;/sup&gt;** adjusts R&lt;sup&gt;2&lt;/sup&gt; DOWNWARD by adding a penalty for additional predictor variables.
+
+    - R&lt;sup&gt;2&lt;/sup&gt; (unadjusted) should NOT be used to compare MLR models.
+
+    - Adding predictors will always increase R&lt;sup&gt;2&lt;/sup&gt;, even if predictors are not useful.
+
+    - Instead we adjust: We penalize model R&lt;sup&gt;2&lt;/sup&gt; for each additional variable added.
+
+    - Adjusted R&lt;sup&gt;2&lt;/sup&gt; only increases if model fit improvement exceeds penalty for adding terms.
+
+    - P-values for each term and change in Adjusted R&lt;sup&gt;2&lt;/sup&gt; often agree (but not always)
+
+    - As P, number of predictors increases, the penalty increases.
+
+    - Adjusted R&lt;sup&gt;2&lt;/sup&gt; = 1 - `\(\frac{(1-R^2)(n-1)}{n-P-1}\)`
+
+**Students are not required to memorize this equation but you should understand what it is doing.**
+
+---
+
+### Examine All Possible Models using Adjusted R&lt;sup&gt;2&lt;/sup&gt;
+
+
+```r
+insure_full &lt;- lm(ln_charges ~ Age + BMI + Children + Age*Children + # full model specified
+                    Age*BMI + BMI*Children, data=insure)
+
+insure_all_models &lt;- ols_step_all_possible(insure_full)   # all possible models
+
+insure_all_subset &lt;- insure_all_models |&gt;                 # specify model subset
+  select(mindex, n, predictors, rsquare, adjr) |&gt;         # determined based on           
+  filter(mindex %in% c(1,5,6,8,10,22,42,44,47))           # understanding of data
+
+insure_subset_print1 &lt;- insure_all_subset |&gt;    # format table for printing and print
+  select(n, predictors, rsquare, adjr) |&gt;       # select useful columns
+  mutate(rsquare = rsquare |&gt; round(4),         # round values to 4 decimal places
+         adjr = adjr |&gt; round(4)) |&gt;
+  
+  arrange(desc(adjr)) |&gt;                        # reorder by adjust rsquared
+  rename(`No. of Predictors`= n,                # rename table columns
+         Predictors = predictors,
+         `R&lt;sup&gt;2&lt;/sup&gt;` = rsquare,
+         `Adjusted R&lt;sup&gt;2&lt;/sup&gt;` =  adjr) |&gt;
+  
+  kable()
+```
+
+
+
+
+
+
+
+---
+
+### Examine All Possible Models using Adjusted R&lt;sup&gt;2&lt;/sup&gt;
+
+.pull-left[
+
+#### Sorted by No. of Predictors
+
+
+| No. of Predictors|Predictors                    | R&lt;sup&gt;2&lt;/sup&gt;| Adjusted R&lt;sup&gt;2&lt;/sup&gt;|
+|-----------------:|:-----------------------------|-------------:|----------------------:|
+|                 1|Age                           |        0.2786|                 0.2781|
+|                 1|Children                      |        0.0260|                 0.0253|
+|                 1|BMI                           |        0.0176|                 0.0169|
+|                 2|Age Children                  |        0.2979|                 0.2969|
+|                 2|Age BMI                       |        0.2843|                 0.2832|
+|                 3|Age BMI Children              |        0.3035|                 0.3019|
+|                 4|Age BMI Children Age:Children |        0.3075|                 0.3054|
+|                 4|Age BMI Children Age:BMI      |        0.3046|                 0.3025|
+|                 4|Age BMI Children BMI:Children |        0.3036|                 0.3015|
+
+]
+
+.pull-right[
+
+#### Sorted by Adj. R&lt;sup&gt;2&lt;/sup&gt;
+
+
+| No. of Predictors|Predictors                    | R&lt;sup&gt;2&lt;/sup&gt;| Adjusted R&lt;sup&gt;2&lt;/sup&gt;|
+|-----------------:|:-----------------------------|-------------:|----------------------:|
+|                 4|Age BMI Children Age:Children |        0.3075|                 0.3054|
+|                 4|Age BMI Children Age:BMI      |        0.3046|                 0.3025|
+|                 3|Age BMI Children              |        0.3035|                 0.3019|
+|                 4|Age BMI Children BMI:Children |        0.3036|                 0.3015|
+|                 2|Age Children                  |        0.2979|                 0.2969|
+|                 2|Age BMI                       |        0.2843|                 0.2832|
+|                 1|Age                           |        0.2786|                 0.2781|
+|                 1|Children                      |        0.0260|                 0.0253|
+|                 1|BMI                           |        0.0176|                 0.0169|
+
+
+]
+
+---
+
+### Intro to Model Selection (AKA ariable Selection)
+
+- Adjusted R&lt;sup&gt;2&lt;/sup&gt; is good for comparing a few models.
+- In this case we new that only 9 of the 63 possible models were reasonable.
+- If there are many possible reasonable models, we automate part of the selection process.
+
+- In MLR, the goal is to choose the simplest most accurate model, i.e. the 'BEST' set of independent variables
+
+  - How do we decide which variables should be in our model?
+  - There are many methods:
+  - A popular method, **Backward Elimination**, can also be done manually in any software:
+
+     - Start with all potential terms (including potential interaction terms) in the model and removes the least significant term one at time
+
+  - Looking ahead, we'll also cover:
+
+     - Foreward Selection
+     - Stepwise Selection
+     - 'All Possible' models - compared using additional measures
+
+- **Common Practice:** Try multiple methods to develop preliminary final model and then tweak as needed.
+
+---
+
+### Steps for Backward Elimination
+
+**`1.`** Examine Matrix of Scatterplots and histograms and determine if any transformations are needed to linearize relationships between continuous predictors and response variable.
+
+- Optional at this stage: Also examine correlation matrix to determine if some pairs of variables will be a concern
+
+- **New term - Multicollinearity:** If two predictors (X variables) in model have a correlation of 0.8 or higher, they can not both stay in the model because they are multicollinear and cause the model to be unstable.
+
+**`2.`** Create a 'saturated' model with all potential predictor variables and interaction terms
+
+- This is subjective.
+- Be as transparent as possible in your how you decide on your full model.
+
+**`3.`** Use **'Backward Elimination'** to pare model down to a preliminary model
+
+**`4.`** Examine predictors in preliminary model to confirm they are not too highly correlated with each other.
+
+- If two predictor variables have a correlation of 0.8 or greater, drop one of them (see above)
+
+**`5.`** If model was modified in step 4, rerun model through Backward Elimination (not always needed).
+
+**`6.`**  Interpret final model.
+
+---
+
+### Plan for This Week and HW 7
+
+- In HW 7, you will examine the correlation matrix and then do simple versions of steps 3 and 6.
+- In Lecture 14 (Today) and Lecture 15 (Thursday), we will look at a more complex example.
+
+#### Animals Data - Question: What factors affect a mammal's sleep duration?
+
+- Original dataset includes 56 distinct species, including man.
+
+- Notes:
+
+  - Two species of elephants were removed from the analysis.
+  
+    - Population was limited to animals under 1000 pounds.
+
+  - Natural log (LN) transformed variables were added to original data.
+  - Observations with missing values are removed below
+  - Working dataset has 49 observations (49 different species)
+
+
+```r
+# import and examine data
+animals &lt;- read_csv("animals.csv", show_col_types=F) |&gt;
+  filter(!is.na(LifeSpan) &amp; !is.na(Gestation)) 
+```
+
+---
+
+### Glimpse of Animals Data
+
+
+```r
+animals |&gt; glimpse(width=75)
+```
+
+```
+## Rows: 49
+## Columns: 12
+## $ Species    &lt;chr&gt; "Africangiantpouchedrat", "Americanopossum", "ArcticFo…
+## $ TotalSleep &lt;dbl&gt; 8.3, 19.4, 12.5, 9.8, 19.7, 6.2, 14.5, 9.7, 12.5, 3.9,…
+## $ BodyWt     &lt;dbl&gt; 1.00, 1.70, 3.39, 10.55, 0.02, 160.00, 3.30, 52.16, 0.…
+## $ LNBodyWt   &lt;dbl&gt; 0.00, 0.53, 1.22, 2.36, -3.77, 5.08, 1.19, 3.95, -0.86…
+## $ BrainWt    &lt;dbl&gt; 6.60, 6.30, 44.50, 179.50, 0.30, 169.00, 25.60, 440.00…
+## $ LNBrainWt  &lt;dbl&gt; 1.89, 1.84, 3.80, 5.19, -1.20, 5.13, 3.24, 6.09, 1.86,…
+## $ LifeSpan   &lt;dbl&gt; 4.5, 5.0, 14.0, 27.0, 19.0, 30.4, 28.0, 50.0, 7.0, 30.…
+## $ LNLifeSpan &lt;dbl&gt; 1.50, 1.61, 2.64, 3.30, 2.94, 3.41, 3.33, 3.91, 1.95, …
+## $ Gestation  &lt;dbl&gt; 42.0, 12.0, 60.0, 180.0, 35.0, 392.0, 63.0, 230.0, 112…
+## $ Predation  &lt;dbl&gt; 3, 2, 1, 4, 1, 4, 1, 1, 5, 5, 5, 1, 2, 2, 2, 5, 3, 1, …
+## $ Exposure   &lt;dbl&gt; 1, 1, 1, 4, 1, 5, 2, 1, 4, 5, 5, 1, 2, 2, 2, 5, 1, 4, …
+## $ Danger     &lt;dbl&gt; 3, 1, 1, 4, 1, 4, 1, 1, 4, 5, 5, 1, 2, 2, 2, 5, 2, 1, …
+```
+
+---
+
+### Animals Data Dictionary - Description of Variables
+
+
+|Variable   |Type         |Description                                                                     |
+|:----------|:------------|:-------------------------------------------------------------------------------|
+|Species    |Nominal      |Name of Species                                                                 |
+|TotalSleep |Quantitative |Total Sleep = sum of slow wave and paradoxical sleep (hrs/day)                  |
+|BodyWt     |Quantitative |Average Body Weight in kilograms                                                |
+|LNBodyWt   |Quantitative |Natural Log of Body Weight                                                      |
+|BrainWt    |Quantitative |Average Brain Weight in grams                                                   |
+|LNBrainWt  |Quantitative |Natural Log of Brain Weight                                                     |
+|LifeSpan   |Quantitative |Maximum Life Span in years                                                      |
+|LNLifeSpan |Quantitative |Natural Log of Life Span                                                        |
+|Gestation  |Quantitative |Gestation Time in days                                                          |
+|Predation  |Ordinal      |Predation Index (1 = least likely to be preyed upon, 5 = most likely)           |
+|Exposure   |Ordinal      |Sleep Exposure Index (1 = least exposed while sleeping, 5 = most exposed        |
+|Danger     |Ordinal      |Overall Danger Index (1 = least danger from other animals, 5 = most most danger |
+
+#### Intuitvely, there is likely to be redundancy between `Predation`, `Exposure`, and `Danger`.
+
+---
+.pull-left[
+
+### Matrix of Scatterplots 
+
+- Like correlation matrices, scatterplot matrices are a useful way to quickly examine all possible predictors.
+- First let's look at untransformed quantitative variables.
+
+  - Notice BodyWt, BrainWt, LifeSpan plots all show observations clustered in the corner.
+  - That indicates that these dsitributions are skewed and should be log transformed.
+  -   Could be verified with histograms
+
+
+```r
+animal_mat1 &lt;- animals |&gt; select(TotalSleep, 
+                                 BodyWt, 
+                                 BrainWt, 
+                                 LifeSpan, 
+                                 Gestation)
+```
+
+]
+
+.pull-right[
+
+
+```r
+pairs(animal_mat1)
+```
+
+&lt;img src="docs_files/figure-html/scatterplot matrix 1-1.png" width="504" style="background-color: #3D3D3D; padding:1px;" /&gt;
+
+]
+
+---
+
+.pull-left[
+
+### Scatterplot Matrix of Transformed Variables
+
+- Next is same matrix with the LN transformed variables.
+
+- Notice that distributions look better BUT some variables are highly correlated
+
+  - Recall: If `\(R_{XY} \geq 0.8\)` for two variables, they cannot both be in the model because they are **multicollinear**.
+
+  - `LNBodyWt` and `LNBrainWt` should definitely both NOT be in the final model.
+
+  - `LNBrainWt` and `LNLifeSpan` appear close to the cutoff and should not be in the final model together, if possible.
+  
+
+```r
+animal_mat2 &lt;- animals |&gt; select(TotalSleep, 
+                                 LNBodyWt, 
+                                 LNBrainWt, 
+                                 LNLifeSpan, 
+                                 Gestation)
+```
+
+]
+
+.pull-right[
+
+
+
+```r
+pairs(animal_mat2)
+```
+
+&lt;img src="docs_files/figure-html/scatterplot matrix 2-1.png" width="504" style="background-color: #3D3D3D; padding:1px;" /&gt;
+
+]
+
+---
+
+### Correlation Matrix of Transformed Variables
+
+The correlation matrix shows the numerical values of the correlations we see in the scatterplot.
+
+
+```r
+animal_mat2 |&gt; cor() |&gt; round(2) |&gt; kable()
+```
+
+
+
+|           | TotalSleep| LNBodyWt| LNBrainWt| LNLifeSpan| Gestation|
+|:----------|----------:|--------:|---------:|----------:|---------:|
+|TotalSleep |       1.00|    -0.56|     -0.57|      -0.37|     -0.62|
+|LNBodyWt   |      -0.56|     1.00|      0.95|       0.71|      0.71|
+|LNBrainWt  |      -0.57|     0.95|      1.00|       0.79|      0.73|
+|LNLifeSpan |      -0.37|     0.71|      0.79|       1.00|      0.62|
+|Gestation  |      -0.62|     0.71|      0.73|       0.62|      1.00|
+
+
+---
+
+.pull-left[
+
+### Scatterplot Matrix of Ordinal Variables
+
+#### Lecture 14 In-class Exercises
+
+#### **Question 4 (L14) - Session ID: bua345s23**
+
+Which two ordinal categorical predictor variables appear to be multicollinear, i.e., highly correlated?
+
+
+```r
+animal_mat3 &lt;- animals |&gt; select(TotalSleep, 
+                                 Predation, 
+                                 Exposure, 
+                                 Danger)
+```
+
+]
+
+
+.pull-right[
+
+
+```r
+pairs(animal_mat3)
+```
+
+&lt;img src="docs_files/figure-html/scatterplot matrix 3-1.png" width="350" style="background-color: #3D3D3D; padding:1px;" /&gt;
+
+```r
+animal_mat3 |&gt; cor() |&gt; round(2)
+```
+
+```
+##            TotalSleep Predation Exposure Danger
+## TotalSleep       1.00     -0.48    -0.63  -0.63
+## Predation       -0.48      1.00     0.66   0.95
+## Exposure        -0.63      0.66     1.00   0.78
+## Danger          -0.63      0.95     0.78   1.00
+```
+
+]
+
+### Backward Elimination
+
+**`1.`** Data examination and transformations completed
+
+**`2.`** Create a full 'saturated' model with all potential predictor variables and interaction terms (This is subjective).
+
+
+```r
+ # convert ordinal variables to factors
+animals &lt;- animals |&gt;       
+  mutate(PredF = factor(Predation), 
+         ExposF = factor(Exposure), 
+         DangrF=factor(Danger))
+
+# full model (subjective)
+animals_full &lt;- lm(TotalSleep ~ LNBodyWt + LNBrainWt + 
+                     LNLifeSpan + Gestation + 
+                     PredF + ExposF + DangrF + 
+                     LNBodyWt*Gestation + LNLifeSpan*PredF + 
+                     LNLifeSpan*ExposF + LNLifeSpan*DangrF, data=animals)
+```
+
+---
+
+### Backward Elimination
+
+**`3.`** Use 'Backward Elimination' to pare full model down to a preliminary model.
+
+- We cast a ***wide net*** to start by specifying that erms will remain in model if p-value &lt; 0.1.  
+
+
+```r
+(animals_BE &lt;- ols_step_backward_p(animals_full, prem = 0.1, progress = T))
+```
+
+&lt;img src="docs_files/images/animals_BE_candidate_terms.jpg" width="208" height="200" /&gt;
+
+&lt;img src="docs_files/images/animals_BE_elim_smry.jpg" width="679" /&gt;
+
+---
+
+### Backward Elimination - Preliminary Model  
+
+- Note that each category of each factor variable is shown making model look more complex than it is.
+
+&lt;img src="docs_files/images/animals_BE_mlr2.jpg" width="781" /&gt;
+
+---
+
+### Backward Elimination - Next Steps
+
+**`4.`** Examine predictors in preliminary model to confirm they are not too highly correlated with each other. 
+
+- If correlation for two variables, `\(R_{XY} \geq 0.8\)`, then one variable should be excluded.
+
+- Variables in preliminary model: : `LNBodyWt`, `LNLifeSpan`, `Gestation`, `PredF`, `DangrF`, `LNLifeSpan*PredF`
+
+  - Recall that `PredF` (Predation) and `DangrF` (Danger) are highly correlated.
+  - `PredF` is included in an interaction term so exclude `DangrF`.
+
+**`5.`** If model was modified in Step 4, rerun model through Backward Elimination (not always needed).
+
+**`6.`**  Interpret final model. 
+
+- Adjusted R&lt;sup&gt;2&lt;/sup&gt; = 0.655
+- Model below looks complicated, but each animal is in only one Predation Category.
+- Baseline Predation Category = 1
+
+
+
+```r
+# specify final model
+(animals_final &lt;- ols_regress(TotalSleep ~ LNBodyWt + LNLifeSpan + Gestation + 
+                               PredF + LNLifeSpan*PredF, data=animals))
+# save coefficients
+animals_model &lt;- animals_final$model
+```
+
+
+---
+
+### Backwards Elimination - Animal Data Final Model
+
+&lt;img src="docs_files/images/animals_BE_final_mlr2.jpg" width="782" /&gt;
+
+
+---
+
+
+### Using Model to Find Estimates - Exporting Model and Data to Excel
+
+- This model can be used to find model estimates and residuals for all animals.
+
+- We will **ALSO** do these calculations are done in an Excel Spreadsheet to clarify each model component in estimate.
+
+- Below we export the data for three species to examine how the model works
+
+
+```r
+animals_model_data &lt;- animals |&gt;             # create new dataset with model variables only
+  select(Species, TotalSleep, LNBodyWt, LNLifeSpan, Gestation, PredF)
+
+three_species &lt;- animals_model_data |&gt;       # create mini dataset with three species
+  filter(Species %in% c("Baboon", "Donkey", "ArcticFox")) |&gt;
+  write_csv("ThreeSpecies.csv")
+```
+
+
+|Species   | TotalSleep| LNBodyWt| LNLifeSpan| Gestation|PredF |
+|:---------|----------:|--------:|----------:|---------:|:-----|
+|ArcticFox |       12.5|     1.22|       2.64|        60|1     |
+|Baboon    |        9.8|     2.36|       3.30|       180|4     |
+|Donkey    |        3.1|     5.23|       3.69|       365|5     |
+
+---
+
+### Using Model to Find Estimates - Exporting Model and Data to Excel
+
+.pull-left[
+
+
+- Model coefficients for calculations can be extracted and exported to Excel.
+
+- Below We create a two column dataset listing each model component and it's beta coefficient.
+
+- That dataset is exported as a .csv file for an in-class exercise.
+
+
+```r
+# examine and export model betas for worksheet
+beta &lt;- animals_final$betas
+model_term &lt;- names(beta)
+animal_betas &lt;- tibble(model_term, beta) |&gt; 
+    write_csv("animal_betas.csv")
+```
+
+#### Lecture 14 In-class Exercises
+#### **Question 5 (L14) - Session ID: bua345s23**
+
+What is the regression estimate of total sleep for 'Donkey'?
+
+]
+
+.pull-right[
+
+
+|model_term        |       beta|
+|:-----------------|----------:|
+|(Intercept)       |  6.7511924|
+|LNBodyWt          | -0.6976209|
+|LNLifeSpan        |  2.8549780|
+|Gestation         | -0.0197780|
+|PredF2            | 13.9978995|
+|PredF3            | 11.8833763|
+|PredF4            |  2.6535808|
+|PredF5            | -0.7817459|
+|LNLifeSpan:PredF2 | -5.3667542|
+|LNLifeSpan:PredF3 | -7.3900194|
+|LNLifeSpan:PredF4 | -0.9408554|
+|LNLifeSpan:PredF5 | -1.0427379|
+
+]
+
+
+---
+
+### Using Model to Find Estimates in R
+
+- Model estimates can be calculated in R.
+
+- The Excel Worksheet is used to demonstrate and clarify how those estimates are calculated.
+
+- Students will be expected to calculate an estimate using a model with this level of complexity on Quiz 2.
+
+
+```r
+animals_model_data &lt;- animals_model_data |&gt;     # add model estimates to data
+  mutate(Est_TotalSleep = lm(animals_model) |&gt; 
+           predict(animals_model_data) |&gt; round(2))
+
+animals_model_data &lt;- animals_model_data |&gt;          # calculate residuals
+  mutate(Resid = TotalSleep - Est_TotalSleep) |&gt;
+  relocate(Est_TotalSleep, Resid, .after=TotalSleep) # reorder variables
+
+head(animals_model_data, 4) |&gt; kable()               # print first 4 rows
+```
+
+
+
+|Species                | TotalSleep| Est_TotalSleep| Resid| LNBodyWt| LNLifeSpan| Gestation|PredF |
+|:----------------------|----------:|--------------:|-----:|--------:|----------:|---------:|:-----|
+|Africangiantpouchedrat |        8.3|          11.00| -2.70|     0.00|       1.50|        42|3     |
+|Americanopossum        |       19.4|          16.10|  3.30|     0.53|       1.61|        12|2     |
+|ArcticFox              |       12.5|          12.25|  0.25|     1.22|       2.64|        60|1     |
+|Baboon                 |        9.8|          10.51| -0.71|     2.36|       3.30|       180|4     |
+
+---
+
+### Reminder of Upcoming Dates
+
+.pull-left[
+
+- **HW 6 was due yesterday (3/6)** but grace period is extended until tonight at midnight.
+
+- **HW 7 is due on Monday, 3/20**. 
+
+   - Grace Period is extended until Wednesday 3/22 at midnight, because of Spring Break.
+  
+- **Quiz 2 is Thursday, March 30th**
+
+- Thursday's Lecture (3/9) will include In-class Exercises using the Animals Data and your HW 7 data to help you make progress.
+
+]
+
+.pull-right[
+
+&lt;img src="docs_files/images/owl.png" width="304" /&gt;
+
+]
+
+---
+
+background-image: url("docs_files/images/tired_panda_faded.png")
+background-size: cover
+
+.pull-left[
+
+### **Key Points from Today**
+
+.bg-azure.b--dark_cyan.ba.bw2.br3.shadow-5.ph2[
+
+- Regression modeling can be overwhelming 
+
+  - Too many options
+
+- Automating part of the variable selection process is helpful.
+
+  - Should not be attempted in Excel.
+
+- Result from Automated process is preliminary.
+  
+  - Analyst should tinker with these results.
+
+- Backward Elimination is one effective method of model selection.
+   - We will cover others.
+
+]
+
+]
+
+.pull-right[
+
+.bg-azure.b--dark_cyan.ba.bw2.br3.shadow-5.ph3[
+You may submit an 'Engagement Question' about each lecture until midnight on the day of the lecture. **A minimum of four submissions are required during the semester.**
+]
+
+]
+
+
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"slideNumberFormat": "%current%/%total%",
+"highlightStyle": "tomorrow-night-bright",
+"highlightLines": true,
+"ratio": "16:9",
+"countIncrementalSlides": true,
+"keep_md": true
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+// add `data-at-shortcutkeys` attribute to <body> to resolve conflicts with JAWS
+// screen reader (see PR #262)
+(function(d) {
+  let res = {};
+  d.querySelectorAll('.remark-help-content table tr').forEach(tr => {
+    const t = tr.querySelector('td:nth-child(2)').innerText;
+    tr.querySelectorAll('td:first-child .key').forEach(key => {
+      const k = key.innerText;
+      if (/^[a-z]$/.test(k)) res[k] = t;  // must be a single letter (key)
+    });
+  });
+  d.body.setAttribute('data-at-shortcutkeys', JSON.stringify(res));
+})(document);
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

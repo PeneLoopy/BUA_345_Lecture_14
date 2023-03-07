@@ -1,0 +1,689 @@
+---
+title: "BUA 455 Lecture 14 - Intro to Model Selection"
+author: "Penelope Pooler Eisenbies"
+date: "`r Sys.Date()`"
+output: 
+  html_document: 
+    code_folding: show
+    toc: yes
+    toc_depth: 4
+    toc_float: yes
+---
+
+### Upcoming Dates
+
+- **HW 6 was due yesterday (3/6)** but grace period is extended until tonight at midnight.
+
+- **HW 7 is due on Monday, 3/20**. 
+
+   - Grace Period is extended until Wednesday 3/22 at midnight, because of Spring Break.
+   
+<br>
+  
+- **Quiz 2 is Thursday, March 30th**
+
+- Thursday's Lecture (3/9) will include In-class Exercises using the Animals Data and your HW 7 data to help you make progress.
+
+---
+
+### Getting Started with Markdown
+
+- Download Zipped R project 
+
+- Open Zipped folder and copy internal folder (R Project) to a BUA 345 folder on your computer NOT IN DOWLOADS
+
+- Click on .Rproj file to open project
+
+- Click on `code_data_output` file to open it.
+
+- Click on `BUA_345_Lecture_14.Rmd` to open it.
+
+- Run Setup Chunk
+
+---
+
+### Setup
+
+* The setup chunk shows the packages needed for this demo.   
+
+* R will install specified packages if needed (only required once after R is installed)  
+
+* R will load specified packaged (required every time you start a new R session)  
+
+* The first time you run this code, R will install these packages which will be slow.  
+
+* **If you get warnings, that's okay.**  
+
+* If you get **error messages**, I (or TA), can help you.
+
+---
+
+### Setup Chunk for Lecture 14
+
+```{r setup for Lecture 14, include = T}
+
+# this line specifies options for default options for all R Chunks
+knitr::opts_chunk$set(echo=T, highlight=T)
+# suppress scientific notation
+options(scipen=100)
+
+# install helper package that loads and installs other packages, if needed
+if (!require("pacman")) install.packages("pacman", repos = "http://lib.stat.cmu.edu/R/CRAN/")
+
+# install and load required packages
+pacman::p_load(pacman,tidyverse, magrittr, olsrr, gridExtra, ggiraphExtra, knitr)
+
+# verify packages
+p_loaded()
+
+```
+
+**NOTES:
+
+- ** Don't worry about `xaringanthemer` package (required for my slides but not for your code).
+
+- If you are having trouble installing/loading any packages, please come to office hour or make an appointment with me or course TA.
+
+---
+
+### Lecture 14 In-class Exercises - Review Question
+
+#### **Question 1 (L14) - Session ID: bua345s23**
+
+- Recall the Actors and Athletes data that we examined in Lecture 14.
+
+```{r celeb_prof regression}
+
+# import and examine celeb profession dataset
+celeb_prof <- read_csv("celeb_prof.csv", show_col_types=F) 
+
+# formatted regression output - saved and printed to screen
+(celeb_interaction_ols<- ols_regress(Earnings ~ Age + Profession + Age*Profession,
+                                     data=celeb_prof, iterm = T))
+
+```
+
+---
+
+### Lecture 14 In-class Exercises - Review Question
+
+#### **Question 1 (L14) - Session ID: bua345s23**
+
+#### Abridged Output
+
+Review Question: Based on the regression output for the Actors and Athletes data, **what is the slope for the linear model for Athletes**?
+
+Round answer to two decimal places.
+
+Hint: To answer this question, you combine two terms:
+-   the baseline slope term for `Age`: 1.824
+-   the difference in slope `Athlete`: -5.063
+-   Slope for Athletes = baseline + difference = `____`
+
+---
+
+#### Example of R<sup>2</sup> Interpretation
+
+#### Import and Examine Insurance Data
+
+```{r import and examine insure_L15 data}
+
+insure <- read_csv("insure_L15.csv", show_col_types=F) # import
+insure <- insure |> # create log transformed variable
+  mutate(ln_charges = log(Charges)) |> glimpse(width=75)
+
+```
+
+---
+
+#### Examine Histograms of Charges and ln_charges
+
+```{r creatingand formatting histograms of Charges and ln_charges, echo=F, fig.width=15, fig.height=8, fig.align='center'}
+
+# histogram of original Charges data
+hist_Charges <- insure |> 
+  ggplot() +  
+  geom_histogram(aes(x=Charges), color="darkblue", fill="lightblue") + 
+  labs(x="Insurance Charges", y="Frequency") +  
+  theme_classic() + 
+  theme(axis.title = element_text(size=18),
+        axis.text = element_text(size=15),
+        plot.background = element_rect(colour = "darkgrey", fill=NA, size=2))
+
+# histogram of ln_charges
+hist_ln_charges <- insure |> 
+  ggplot() +  
+  geom_histogram(aes(x=ln_charges), color="darkgreen", fill="lightgreen") + 
+  labs(x="Natural Log of Insurance Charges", y="Frequency") +  
+  theme_classic() + 
+  theme(axis.title = element_text(size=18),
+        axis.text = element_text(size=15),
+        plot.background = element_rect(colour = "darkgrey", fill=NA, size=2))
+
+# display of these two histograms side by side
+grid.arrange(hist_Charges, hist_ln_charges, ncol=2)
+
+```
+
+---
+
+### SLR model - Predictor (X) Variable: Age
+
+```{r slr model for insurance data}
+
+# save and print slr model
+(insure_slr <- ols_regress(ln_charges ~ Age, data=insure))
+
+```
+
+
+---
+
+### More about R<sup>2</sup> and How It's Calculated
+
+- R = 0.528 which indicates a moderate correlation between `Age` and `ln_charges` (Natural Log of Insurance Charges)
+
+- R<sup>2</sup> = 0.279 which means that approximately 28% of the variability in `ln_charges` (Natural Log of Insurance Charges) is explained by `Age`.
+
+- R<sup>2</sup> can also be calculated from the Sum of Squares output:
+
+   - **SS<sub>TOT</sub>** (Total. Sum of Squares): **1130.474 (Total variability in Y)**
+  
+   - **SS<sub>REG</sub>** (Regression. Sum of Squares): **314.960 (Variability in Y explained by model)**
+   
+   - **SS<sub>RES</sub>** (Residual Sum of Squares): **815.514 (Variability in Y NOT explained by model)**
+
+   - **R<sup>2</sup> = SS<sub>REG</sub> / SS<sub>TOT</sub> = 314.96/1130.474 = 0.279**
+   
+---
+
+### Example MLR Model with Quantitative Interaction Term
+
+-   One POSSIBLE model for these data (there are many):
+
+```{r insurance model iwth quantitative interaction}
+
+# save and print mlr model output
+(insure_mlr_quant1 <- ols_regress(ln_charges ~ Age + BMI + Children + Age*Children, data=insure))
+insure_model1 <- insure_mlr_quant1$model # save model parameters to use in calculations
+
+```
+
+---
+
+### Interpreting and Evaluating Quantitative Interactions
+
+
+- Two CORRECT Interpretation(s) of this interaction:
+
+  1. The effect of age on insurance charges differs depending on how many children you have.
+
+  2. The effect of number of children on insurance charges differs depending your age.
+  
+- Which interpretation the analyst emphasizes depends on the question being addressed.
+
+---
+
+### Lecture 14 In-class Exercises - Quantitative Interactions
+
+#### **Question 2 (L14) - Session ID: bua345s23**
+
+- Based on the R MLR output shown, is the interaction between Age and Number of Children useful in explaining differences in Insurance Charges?
+
+---
+
+### Lecture 14 In-class Exercises - Quantitative Interactions
+
+#### **Question 3 (L14) - Session ID: bua345s23**
+
+- Using this model, what is estimated insurance charge for 45 year old with a BMI of 26 and 2 children? Round to closest whole dollar. 
+
+   - Calculation can be done in R or Excel. Here are values for Excel calculation:
+   
+      - `Age = 45`
+      - `BMI = 26`
+      - `Children = 2`
+      - `Age*Children = 45*2 = 90`
+   
+---
+
+#### **Question 3 (L14) - Session ID: bua345s23**
+
+- Using this model, what is estimated insurance charge for 45 year old with a BMI of 26 and 2 children? Round to closest whole dollar. 
+
+#### Using a Saved Model in R to find an Estimate
+
+First specify values using **EXACT** variables names in model.
+`new_obs` is a one row data set (tibble) with these values.
+
+```{r create a dataset with 1 new observation}
+
+Age <- 45      # specify values using variable names in model
+BMI <- 26
+Children <- 2
+(new_obs <- tibble(Age, BMI, Children)) # new_obs is 1 row dataset
+
+```
+
+---
+
+#### **Question 3 (L14) - Session ID: bua345s23**
+
+- Using this model, what is estimated insurance charge for 45 year old with a BMI of 26 and 2 children? Round to closest whole dollar. 
+
+#### Using a Saved Model in R to find an Estimate
+
+Next, use `mutate` to create a new column in `new_obs`.  
+  - `est_ln_charges` is the estimate created using the `lm` (linear model) command with the saved model `insure_model1` and the `predict` command
+
+```{r use model to predict estimated ln_charges for new_obs}
+              
+(new_obs <- new_obs |>                  # create estimate_ln_charges
+  mutate(est_ln_charges = lm(insure_model1) |> predict(new_obs)))
+
+```
+
+
+The last step is to back-transform the `est_ln_charges` value to create `est_charges`, the estimate of charges in dollars for this individual.
+
+```{r back_transform est_ln_charges to dollars}
+
+# (new_obs <- new_obs |> mutate(est_charges = ____(_____)))
+
+```
+
+---
+
+### Lecture 14 In-class Exercises - Quantitative Interactions
+
+#### **Question 4 (L14) - Session ID: bua345s23**
+
+In the above model, all included terms appear to be useful to the model. Is the interaction between Age and BMI also useful in explaining the variability in insurance charges?
+
+Examine the model output to answer this question.
+
+```{r insure model with two quant interactions}
+
+# save and print mlr model output
+(insure_mlr_quant2 <- ols_regress(ln_charges ~ Age + BMI + Children + 
+                                    Age*Children + Age*BMI, data=insure))
+
+```
+
+---
+
+### Goodness of Fit - Adjusted R<sup>2</sup>
+
+- Previous slides show two possible models for these data. ***There are 63 possible models*** with these X variables and all two way interactions.
+
+- Today we will discuss **Adjusted R<sup>2</sup>** as one option to compare different models (We will cover other model comparison measures soon).
+  
+  - **Adjusted R<sup>2</sup>** adjusts R<sup>2</sup> DOWNWARD by adding a penalty for additional predictor variables.
+
+    - R<sup>2</sup> (unadjusted) should NOT be used to compare MLR models.
+
+    - Adding predictors will always increase R<sup>2</sup>, even if predictors are not useful.
+
+    - Instead we adjust: We penalize model R<sup>2</sup> for each additional variable added.
+
+    - Adjusted R<sup>2</sup> only increases if model fit improvement exceeds penalty for adding terms.
+
+    - P-values for each term and change in Adjusted R<sup>2</sup> often agree (but not always)
+
+    - As P, number of predictors increases, the penalty increases.
+
+    - Adjusted R<sup>2</sup> = 1 - $\frac{(1-R^2)(n-1)}{n-P-1}$
+
+**Students are not required to memorize this equation but you should understand what it is doing.**
+
+---
+
+### Examine All Possible Models using Adjusted R<sup>2</sup>
+
+```{r code to examine all possible insurance models}
+
+insure_full <- lm(ln_charges ~ Age + BMI + Children + Age*Children + # full model specified
+                    Age*BMI + BMI*Children, data=insure)
+
+insure_all_models <- ols_step_all_possible(insure_full)   # all possible models
+
+insure_all_subset <- insure_all_models |>                 # specify model subset
+  select(mindex, n, predictors, rsquare, adjr) |>         # determined based on           
+  filter(mindex %in% c(1,5,6,8,10,22,42,44,47))           # understanding of data
+
+(insure_subset_print1 <- insure_all_subset |>   # format table for printing and print
+  select(n, predictors, rsquare, adjr) |>       # select useful columns
+  mutate(rsquare = rsquare |> round(4),         # round values to 4 decimal places
+         adjr = adjr |> round(4)) |>
+  
+  arrange(desc(adjr)) |>                        # reorder by adjust rsquared
+  rename(`No. of Predictors`= n,                # rename table columns
+         Predictors = predictors,
+         `R<sup>2</sup>` = rsquare,
+         `Adjusted R<sup>2</sup>` =  adjr) |>
+  
+  kable())
+
+```
+
+---
+
+### Plan for This Week and HW 7
+
+- In HW 7, you will examine the correlation matrix and then do simple versions of steps 3 and 6.
+- In Lecture 14 (Today) and Lecture 15 (Thursday), we will look at a more complex example.
+
+#### Animals Data - Question: What factors affect a mammal's sleep duration?
+
+- Original dataset includes 56 distinct species, including man.
+
+- Notes:
+
+  - Two species of elephants were removed from the analysis.
+  
+    - Population was limited to animals under 1000 pounds.
+
+  - Natural log (LN) transformed variables were added to original data.
+  - Observations with missing values are removed below
+  - Working dataset has 49 observations (49 different species)
+
+```{r import data and remove missing values}
+
+# import and examine data
+animals <- read_csv("animals.csv", show_col_types=F) |>
+  filter(!is.na(LifeSpan) & !is.na(Gestation)) 
+
+```
+
+---
+
+### Glimpse of Animals Data
+
+```{r data glimpse}
+
+animals |> glimpse(width=75)
+
+```
+
+---
+
+### Animals Data Dictionary - Description of Variables
+
+```{r animals data dictionary table, echo=F}
+
+Variable <- names(animals)
+
+Type <- c("Nominal", rep("Quantitative", 8), rep("Ordinal", 3))
+
+Description <- c("Name of Species",
+                 "Total Sleep = sum of slow wave and paradoxical sleep (hrs/day)",
+                 "Average Body Weight in kilograms",
+                 "Natural Log of Body Weight",
+                 "Average Brain Weight in grams",
+                 "Natural Log of Brain Weight",
+                 "Maximum Life Span in years",
+                 "Natural Log of Life Span",
+                 "Gestation Time in days",
+                 "Predation Index (1 = least likely to be preyed upon, 5 = most likely)",
+                 "Sleep Exposure Index (1 = least exposed while sleeping, 5 = most exposed",
+                 "Overall Danger Index (1 = least danger from other animals, 5 = most most danger")
+
+(animal_data_dictionary = tibble (Variable, Type, Description) |>
+  kable())
+
+```
+
+#### Intuitvely, there is likely to be redundancy between `Predation`, `Exposure`, and `Danger`.
+
+---
+
+### Matrix of Scatterplots 
+
+- Like correlation matrices, scatterplot matrices are a useful way to quickly examine all possible predictors.
+- First let's look at untransformed quantitative variables.
+
+  - Notice BodyWt, BrainWt, LifeSpan plots all show observations clustered in the corner.
+  - That indicates that these dsitributions are skewed and should be log transformed.
+  -   Could be verified with histograms
+
+```{r matrix 1}
+
+animal_mat1 <- animals |> select(TotalSleep, 
+                                 BodyWt, 
+                                 BrainWt, 
+                                 LifeSpan, 
+                                 Gestation)
+
+pairs(animal_mat1)
+
+```
+
+---
+
+### Scatterplot Matrix of Transformed Variables
+
+- Next is same matrix with the LN transformed variables.
+
+- Notice that distributions look better BUT some variables are highly correlated
+
+  - Recall: If $R_{XY} \geq 0.8$ for two variables, they cannot both be in the model because they are **multicollinear**.
+
+  - `LNBodyWt` and `LNBrainWt` should definitely both NOT be in the final model.
+
+  - `LNBrainWt` and `LNLifeSpan` appear close to the cutoff and should not be in the final model together, if possible.
+  
+```{r matrix 2}
+
+animal_mat2 <- animals |> select(TotalSleep, 
+                                 LNBodyWt, 
+                                 LNBrainWt, 
+                                 LNLifeSpan, 
+                                 Gestation)
+
+pairs(animal_mat2)
+
+animal_mat2 |> cor() |> round(2) |> kable()
+
+```
+
+
+The correlation matrix shows the numerical values of the correlations we see in the scatterplot.
+
+
+---
+
+### Scatterplot Matrix of Ordinal Variables
+
+#### Lecture 14 In-class Exercises
+
+#### **Question 4 (L14) - Session ID: bua345s23**
+
+Which two ordinal categorical predictor variables appear to be multicollinear, i.e., highly correlated?
+
+```{r matrix 3}
+
+animal_mat3 <- animals |> select(TotalSleep, 
+                                 Predation, 
+                                 Exposure, 
+                                 Danger)
+
+pairs(animal_mat3)
+
+animal_mat3 |> cor() |> round(2)
+
+```
+
+---
+
+### Backward Elimination
+
+**`1.`** Data examination and transformations completed
+
+**`2.`** Create a full 'saturated' model with all potential predictor variables and interaction terms (This is subjective).
+
+```{r animals full model}
+
+ # convert ordinal variables to factors
+animals <- animals |>       
+  mutate(PredF = factor(Predation), 
+         ExposF = factor(Exposure), 
+         DangrF=factor(Danger))
+
+# full model (subjective)
+animals_full <- lm(TotalSleep ~ LNBodyWt + LNBrainWt + 
+                     LNLifeSpan + Gestation + 
+                     PredF + ExposF + DangrF + 
+                     LNBodyWt*Gestation + LNLifeSpan*PredF + 
+                     LNLifeSpan*ExposF + LNLifeSpan*DangrF, data=animals)
+
+```
+
+---
+
+### Backward Elimination
+
+**`3.`** Use 'Backward Elimination' to pare full model down to a preliminary model.
+
+- We cast a ***wide net*** to start by specifying that erms will remain in model if p-value < 0.1.  
+
+- Note that each category of each factor variable is shown making model look more complex than it is.
+
+```{r animals model backward elim and output}
+
+(animals_BE <- ols_step_backward_p(animals_full, prem = 0.1, progress = T))
+
+```
+
+---
+
+### Backward Elimination - Next Steps
+
+**`4.`** Examine predictors in preliminary model to confirm they are not too highly correlated with each other. 
+
+- If correlation for two variables, $R_{XY} \geq 0.8$, then one variable should be excluded.
+
+- Variables in preliminary model: : `LNBodyWt`, `LNLifeSpan`, `Gestation`, `PredF`, `DangrF`, `LNLifeSpan*PredF`
+
+  - Recall that `PredF` (Predation) and `DangrF` (Danger) are highly correlated.
+  - `PredF` is included in an interaction term so exclude `DangrF`.
+
+**`5.`** If model was modified in Step 4, rerun model through Backward Elimination (not always needed).
+
+**`6.`**  Interpret final model. 
+
+- Adjusted R<sup>2</sup> = 0.655
+- Model below looks complicated, but each animal is in only one Predation Category.
+- Baseline Predation Category = 1
+
+
+```{r final animal model}
+# specify final model
+(animals_final <- ols_regress(TotalSleep ~ LNBodyWt + LNLifeSpan + Gestation + 
+                               PredF + LNLifeSpan*PredF, data=animals))
+# save coefficients
+animals_model <- animals_final$model
+
+```
+
+---
+
+
+### Using Model to Find Estimates - Exporting Model and Data to Excel
+
+- This model can be used to find model estimates and residuals for all animals.
+
+- We will **ALSO** do these calculations are done in an Excel Spreadsheet to clarify each model component in estimate.
+
+- Below we export the data for three species to examine how the model works
+
+```{r exporting data to excel for demo}
+animals_model_data <- animals |>             # create new dataset with model variables only
+  select(Species, TotalSleep, LNBodyWt, LNLifeSpan, Gestation, PredF)
+
+(three_species <- animals_model_data |>       # create mini dataset with three species
+  filter(Species %in% c("Baboon", "Donkey", "ArcticFox")) |>
+  write_csv("ThreeSpecies.csv"))
+
+```
+
+---
+
+### Using Model to Find Estimates - Exporting Model and Data to Excel
+
+- Model coefficients for calculations can be extracted and exported to Excel.
+
+- Below We create a two column dataset listing each model component and it's beta coefficient.
+
+- That dataset is exported as a .csv file for an in-class exercise.
+
+```{r export model betas}
+
+# examine and export model betas for worksheet
+beta <- animals_final$betas
+model_term <- names(beta)
+(animal_betas <- tibble(model_term, beta) |> 
+    write_csv("animal_betas.csv"))
+
+```
+
+#### Lecture 14 In-class Exercises
+#### **Question 5 (L14) - Session ID: bua345s23**
+
+What is the regression estimate of total sleep for 'Donkey'?
+
+---
+
+### Using Model to Find Estimates in R
+
+- Model estimates can be calculated in R.
+
+- The Excel Worksheet is used to demonstrate and clarify how those estimates are calculated.
+
+- Students will be expected to calculate an estimate using a model with this level of complexity on Quiz 2.
+
+```{r regression model estimates in R}
+animals_model_data <- animals_model_data |>     # add model estimates to data
+  mutate(Est_TotalSleep = lm(animals_model) |> 
+           predict(animals_model_data) |> round(2))
+
+animals_model_data <- animals_model_data |>          # calculate residuals
+  mutate(Resid = TotalSleep - Est_TotalSleep) |>
+  relocate(Est_TotalSleep, Resid, .after=TotalSleep) # reorder variables
+
+head(animals_model_data, 4) |> kable()               # print first 4 rows
+
+```
+
+---
+
+
+---
+
+### **Key Points from Today**
+
+- Regression modeling can be overwhelming 
+
+  - Too many options
+  
+<br>
+
+- Automating part of the variable selection process is helpful.
+
+  - Should not be attempted in Excel.
+  
+<br>
+
+- Result from Automated process is preliminary.
+  
+  - Analyst should tinker with these results.
+  
+<br>
+
+- Backward Elimination is one effective method of model selection.
+
+   - We will cover others.
+
+<br>
+
+You may submit an 'Engagement Question' about each lecture until midnight on the day of the lecture. **A minimum of four submissions are required during the semester.**
+
