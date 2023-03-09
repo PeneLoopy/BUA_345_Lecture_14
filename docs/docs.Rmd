@@ -1,5 +1,5 @@
 ---
-title: "BUA 345 - Lecture 14"
+title: "BUA 345 - Lecture 15"
 subtitle: "Introduction to Model Selection"  
 author: "Penelope Pooler Eisenbies"
 date: '`r Sys.Date()`'
@@ -39,7 +39,7 @@ if (!require("pacman")) install.packages("pacman", repos = "http://lib.stat.cmu.
 
 # install and load required packages
 # pacman should be first package in parentheses and then list others
-pacman::p_load(pacman, tidyverse, gridExtra, magrittr, tools)
+pacman::p_load(pacman,tidyverse, magrittr, olsrr, gridExtra, ggiraphExtra, knitr)
 
 # verify packages (comment out in finished documents)
 p_loaded()
@@ -913,6 +913,8 @@ animal_mat3 |> cor() |> round(2)
 ```
 
 ]
+
+---
 
 ### Backward Elimination
 
